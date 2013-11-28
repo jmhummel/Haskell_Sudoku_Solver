@@ -8,6 +8,10 @@ getRowIndexes row = [ row * 9 + i | i<-[0..8]]
 getColIndexes col = [ i * 9 + col | i<-[0..8]]
 getBoxIndexes box = [ (3 * (box `div` 3) + i) * 9 + (3 * (box `mod` 3) + j) | i<-[0..2], j<-[0..2]]
 
+getRowFromIndex index = index `div` 9
+getColFromIndex index = index `mod` 9
+getBoxFromIndex index = head [ i | i<-[0..8], elem index (getBoxIndexes i)]
+
 -- test functions									 
 testSet set = foldr (&&) True [ (0 == set !! i) || not (elem (set !! i) (drop (i+1) set)) | i <- [0..8] ]
 testRows prob = foldr (&&) True [ testSet $ getRow i prob | i <- [0..8]]
@@ -34,37 +38,51 @@ searchN ((x:xs),n) = if testSolved x then (x,n) else searchN (extend x ++ xs, n+
 --main = print $ search [prob]
 --main = print $ searchN ([stest1],0)
 
+-- values allowed
+
+allowedValues index prob = if (prob !! index) == 0
+							then [ val | val<-[1..9], testAll (insert index val prob)]
+			  				else [prob !! index]
+			  				
+setAllowedValues prob = [ if length (allowedValues i prob) == 1 then head (allowedValues i prob) else 0 | i<-[0..80]]
+			  				
+-- values allowed in no other cell
+
+--getValuesAllowedNoOtherCell index prob
+			  				
+
+
+
+
 -- rule checking
-checkNoOtherValueAllowed index prob
-		| (index == 81) = prob
-		| (length (allowedValues index prob) == 1) = checkNoOtherValueAllowed (index+1) (insert index value prob)
-		| otherwise = checkNoOtherValueAllowed (index+1) prob
-		where value = head $ allowedValues index prob
+-- checkNoOtherValueAllowed index prob
+-- 		| (index == 81) = prob
+-- 		| (length (allowedValues index prob) == 1) = checkNoOtherValueAllowed (index+1) (insert index value prob)
+-- 		| otherwise = checkNoOtherValueAllowed (index+1) prob
+-- 		where value = head $ allowedValues index prob
 		
-checkValueAllowedNoOtherSquare box iter prob
- 		| (box == 9 && iter == 10) = prob
-		| (iter == 10) = checkValueAllowedNoOtherSquare (box+1) 0 prob
-		| ((length noOtherSetValues) == 1) = checkValueAllowedNoOtherSquare box (iter+1) (insert ((getBoxIndexes box) !! iter) (head noOtherSetValues) prob)
-			where noOtherSetValues = (valuesAllowedNoOtherSet (getBoxIndexes box) iter prob)
-		| otherwise = checkValueAllowedNoOtherSquare box  (iter+1) prob
+-- checkValueAllowedNoOtherSquare box iter prob
+--  		| (box == 9 && iter == 10) = prob
+-- 		| (iter == 10) = checkValueAllowedNoOtherSquare (box+1) 0 prob
+-- 		| ((length noOtherSetValues) == 1) = checkValueAllowedNoOtherSquare box (iter+1) (insert ((getBoxIndexes box) !! iter) (head noOtherSetValues) prob)
+-- 			where noOtherSetValues = (valuesAllowedNoOtherSet (getBoxIndexes box) iter prob)
+-- 		| otherwise = checkValueAllowedNoOtherSquare box  (iter+1) prob
 		
 		
 
 diff prob0 prob1 = zipWith (-) prob1 prob0
 
-valuesAllowedNoOtherSet indexes iter prob = notAllowedValuesIndexes (remove iter indexes) prob
+-- valuesAllowedNoOtherSet indexes iter prob = notAllowedValuesIndexes (remove iter indexes) prob
+-- 
+-- notAllowedValuesIndexes indexes prob = commonElements [ notAllowedValues i prob | i<-indexes]
+-- 
+-- allowedValuesIndexes indexes prob = commonElements [ allowedValues i prob | i<-indexes]
+-- 
+-- commonElements sets = foldr1 (\set1 set2 -> [ e | e<-set1, elem e set2]) sets 
+-- 
+-- notAllowedValues index prob = [ val | val<-[1..9], notElem val $ allowedValues index prob]
 
-notAllowedValuesIndexes indexes prob = commonElements [ notAllowedValues i prob | i<-indexes]
 
-allowedValuesIndexes indexes prob = commonElements [ allowedValues i prob | i<-indexes]
-
-commonElements sets = foldr1 (\set1 set2 -> [ e | e<-set1, elem e set2]) sets 
-
-notAllowedValues index prob = [ val | val<-[1..9], notElem val $ allowedValues index prob]
-
-allowedValues index prob = if (prob !! index) == 0
-							then [ val | val<-[1..9], testAll (insert index val prob)]
-			  				else []	
 		  
 extendIndex index prob = if (prob !! index) == 0
 			  then filter (testAll) ([insert index val prob | val<-[1..9]])
